@@ -1,6 +1,6 @@
 import { getDeviceId } from "./ws";
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api";
+const BASE_URL = import.meta.env.VITE_API_URL ?? "https://pulsewatch-5atg.onrender.com/api";
 
 function authHeaders(): Record<string, string> {
   const token = localStorage.getItem("pw_token");

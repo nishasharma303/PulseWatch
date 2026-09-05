@@ -1,7 +1,6 @@
 type WsHandler = (msg: any) => void;
 
-const WS_URL = (import.meta.env.VITE_WS_URL as string | undefined) ?? "ws://localhost:4000/ws";
-
+const WS_URL = (import.meta.env.VITE_WS_URL as string | undefined) ?? "wss://pulsewatch-5atg.onrender.com/ws";
 let socket: WebSocket | null = null;
 let handlers: WsHandler[] = [];
 

@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Activity, TrendingUp, ListPlus, Wallet, ArrowRight, LineChart, Sparkles, Zap, ShieldCheck, BellRing } from "lucide-react";
 import { Dashboard } from "./pages/Dashboard";
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api";
+const API_URL = import.meta.env.VITE_API_URL ?? "https://pulsewatch-5atg.onrender.com/api";
 const DEMO_EMAIL = "demo@pulsewatch.dev";
 const DEMO_PASSWORD = "demo1234";
 
