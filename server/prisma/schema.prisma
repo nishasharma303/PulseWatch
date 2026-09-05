@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  watchlists    Watchlist[]
+  signalWeights UserSignalWeight[]
+  lastSeen      UserLastSeen[]
+}
+
+model Watchlist {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String   @default("My Watchlist")
+  createdAt DateTime @default(now())
+
+  user     User              @relation(fields: [userId], references: [id])
+  stocks   WatchlistStock[]
+  lastSeen UserLastSeen[]
+}
+
+model WatchlistStock {
+  id          String   @id @default(uuid())
+  watchlistId String
+  symbol      String
+  isHolding   Boolean  @default(false)
+  addedAt     DateTime @default(now())
+  version     Int      @default(1)
+  updatedAt   DateTime @updatedAt // last-write-wins concurrency handling
+
+  watchlist Watchlist @relation(fields: [watchlistId], references: [id])
+
+  @@unique([watchlistId, symbol])
+}
+
+// APPEND-ONLY. Never UPDATE or DELETE rows here.
+model SignalEvent {
+  id           String   @id @default(uuid())
+  symbol       String
+  timestamp    DateTime @default(now())
+  signalType   String   // price_anomaly | volume_anomaly | market_divergence | sector_divergence | historical_significance
+  value        Float
+  contribution Float    // weighted contribution to attention score at write time
+  dedupeKey    String   @unique // e.g. `${symbol}:${signalType}:${pollTickId}` — makes retried polls safe
+  meta         Json?
+
+  @@index([symbol, timestamp])
+}
+
+// Materialized / cached derived state. Recomputed on every new relevant event.
+model StockSnapshot {
+  symbol           String   @id
+  price            Float
+  prevClose        Float
+  volume           Float
+  attentionScore   Float
+  breakdown        Json
+  is52wHigh        Boolean  @default(false)
+  is52wLow         Boolean  @default(false)
+  stale            Boolean  @default(false)
+  source           String
+  writtenAt        DateTime @updatedAt
+}
+
+model UserSignalWeight {
+  id         String @id @default(uuid())
+  userId     String
+  signalType String
+  multiplier Float  @default(1.0)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, signalType])
+}
+
+model UserLastSeen {
+  id          String   @id @default(uuid())
+  userId      String
+  watchlistId String
+  seenAt      DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id])
+  watchlist Watchlist @relation(fields: [watchlistId], references: [id])
+
+  @@unique([userId, watchlistId])
+}
+
+model DigestLog {
+  id          String   @id @default(uuid())
+  watchlistId String
+  digest      String
+  symbols     String[]
+  createdAt   DateTime @default(now())
+
+  @@index([watchlistId, createdAt])
+}
